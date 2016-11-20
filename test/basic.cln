@@ -1,0 +1,11 @@
+# Tests for Calculate-N
+# By BrokenR3C0RD
+
+a = 1
+b = 2
+
+print(a + b); print(a - b)
+print(a * b); print(a / b); print(a % b)
+print(a ^ b)
+print(a!); print(b!)
+print(rand(b))
