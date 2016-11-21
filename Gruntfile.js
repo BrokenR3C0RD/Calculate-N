@@ -32,9 +32,11 @@ module.exports = function(grunt){
     },
     "browserify": {
       "dist": {
-        "files": {
-          "build/calculate-n.js": "build/calculate-n.inc.js"
-        }
+        "options": {
+          "alias": ["./build/calculate-n.common.js:calculate-n"]
+        },
+        "src": "build/calculate-n.common.js",
+        "dest": "build/calculate-n.js"
       }
     }
   });
