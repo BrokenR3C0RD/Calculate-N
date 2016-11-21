@@ -2,10 +2,13 @@
 
 /* Factorial function, variables, and the built-in functions are here. */
 %{
+var Decimal = require("decimal.js");
+Decimal.set({"modulo": Decimal.EUCLID});
+
 var factorial = function(num){
-  var val = 1;
-  for(var i = 2; i <= num; i++){
-    val *= i;
+  var val = Decimal(1);
+  for(var i = Decimal(2); i.lte(num); i = i.add(1)){
+    val = val.mul(i);
   }
   return val;
 }
@@ -13,73 +16,81 @@ var g = (typeof global === "object" ? global : window);
 var variables = g.calcN = (g.calcN || {});
 var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
   "%NOOP": function(val){
-    return 0;
+    return Decimal(0);
   },
   "print": function(val){
     (typeof global === "object" ? console.log : window.calcPrint)((val >= 0 ? " " : "") + val);
   },
+  "prec": function(val){
+    if(!val.eq(0)){
+      Decimal.set({"precision": val.toNumber()});
+    }
+    return Decimal.precision;
+  },
   "sin": function(val){
-    return Math.sin(val * (Math.PI / 180));
+    return Math.sin(val.mul(Math.PI / 180));
   },
   "cos": function(val){
-    return Math.cos(val * (Math.PI / 180));
+    return Math.cos(val.mul(Math.PI / 180));
   },
   "tan": function(val){
-    return Math.tan(val * (Math.PI / 180));
+    return Math.tan(val.mul(Math.PI / 180));
   },
   "rad": function(val){
-    return val * (Math.PI / 180);
+    return val.mul(Math.PI / 180);
   },
   "deg": function(val){
-    return val / (Math.PI / 180);
+    return val.div(Math.PI / 180);
   },
   "atan": function(val){
-    return Math.atan(val) / (Math.PI / 180);
+    return val.atan().div(Math.PI / 180);
   },
   "asin": function(val){
-    return Math.asin(val) / (Math.PI / 180);
+    return val.asin().div(Math.PI / 180);
   },
   "acos": function(val){
-    return Math.acos(val) / (Math.PI / 180)
+    return val.acos().div(Math.PI / 180)
   },
   "floor": function(val){
-    return Math.floor(val);
+    return val.floor();
   },
   "ceil": function(val){
-    return Math.ceil(val);
+    return val.ceil();
   },
   "round": function(val){
-    return Math.round(val);
+    return val.round();
   },
   "abs": function(val){
-    return Math.abs(val);
+    return val.abs();
   },
   "rand": function(val){
     if(val === 0){
-      return Math.random();
+      return Decimal.random();
     } else {
-      return Math.floor(Math.random() * val);
+      return Decimal.random().mul(val).floor();
     }
   },
   "ln": function(val){
-    return Math.ln(val);
+    return val.ln();
+  },
+  "log": function(val){
+    return val.log();
   },
   "PI": function(val){
-    return Math.PI;
+    return Decimal.acos(-1);
   },
   "E": function(val){
-    return Math.E;
+    return Decimal(Math.E);
   },
   "sqr": function(val){
-    return Math.pow(val, 2);
+    return val.pow(2);
   },
   "sqrt": function(val){
-    return Math.sqrt(val);
+    return val.sqrt();
   },
   "sgn": function(val){
-    return Math.sign(val);
-  },
-  
+    return Decimal.sign(val);
+  }
 };
 
 %}
@@ -149,43 +160,43 @@ expressions
 
 e
   : e '+' e
-    {$$ = $1 + $3;}
+    {$$ = $1.add($3);}
   | e '-' e
-    {$$ = $1 - $3;}
+    {$$ = $1.sub($3);}
   | e '*' e
-    {$$ = $1 * $3;}
+    {$$ = $1.mul($3);}
   | e '/' e
-    {$$ = $1 / $3;}
+    {$$ = $1.div($3);}
   | e '%' e
-    {$$ = $1 % $3;}
+    {$$ = $1.mod($3)}
   | e '^' e
-    {$$ = Math.pow($1, $3);}
+    {$$ = $1.pow($3);}
   | '-' e %prec UMINUS
-    {$$ = -$2;}
+    {$$ = $2.neg();}
   | e '!'
     {$$ = factorial($1);}
   | e '>' e
-    {$$ = ($1 > $3) ? 1 : 0;}
+    {$$ = ($1.gt($3)) ? Decimal(1)  : Decimal(0);}
   | e '<' e
-    {$$ = ($1 < $3) ? 1 : 0;}
+    {$$ = ($1.lt($3)) ? Decimal(1)  : Decimal(0);}
   | e '>=' e
-    {$$ = ($1 >= $3) ? 1 : 0;}
+    {$$ = ($1.gte($3)) ? Decimal(1) : Decimal(0);}
   | e '<=' e
-    {$$ = ($1 <= $3) ? 1 : 0;}
+    {$$ = ($1.lte($3)) ? Decimal(1) : Decimal(0);}
   | e '==' e
-    {$$ = ($1 == $3) ? 1 : 0;}
+    {$$ = ($1.eq($3)) ? Decimal(1)  : Decimal(0);}
   | e '!=' e
-    {$$ = ($1 != $3) ? 1 : 0;}
+    {$$ = !($1.eq($3)) ? Decimal(1) : Decimal(0);}
   | '(' e ')'
     {$$ = $2;}
   | NUMBER
-    {$$ = +yytext;}
+    {$$ = Decimal(yytext);}
   | VARIABLE
-    {$$ = variables[$1] || 0;}
+    {$$ = variables[$1] || Decimal(0);}
   | VARIABLE '=' e
     {$$ = (variables[$1] = $3);}
   | VARIABLE '(' e ')'
-    {$$ = (functions[$1] || functions["%NOOP"])($3) || 0;}
+    {$$ = (functions[$1] || functions["%NOOP"])($3) || Decimal(0);}
   | VARIABLE '(' ')'
-    {$$ = (functions[$1] || functions["%NOOP"])(0) || 0;}
+    {$$ = (functions[$1] || functions["%NOOP"])(Decimal(0)) || Decimal(0);}
   ;

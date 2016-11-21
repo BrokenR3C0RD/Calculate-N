@@ -1,5 +1,6 @@
 module.exports = function(grunt){
   grunt.loadNpmTasks("grunt-jison");
+  grunt.loadNpmTasks("grunt-browserify");
 
   grunt.initConfig({
     "jison": {
@@ -25,11 +26,18 @@ module.exports = function(grunt){
           "moduleName": "calculateN"
         },
         "files": {
-          "build/calculate-n.js": "src/grammar.jison"
+          "build/calculate-n.inc.js": "src/grammar.jison"
+        }
+      }
+    },
+    "browserify": {
+      "dist": {
+        "files": {
+          "build/calculate-n.js": "build/calculate-n.inc.js"
         }
       }
     }
   });
-  grunt.registerTask("all", "Build all distributions", ["jison:amdjs", "jison:commonjs", "jison:browser"]);
-  grunt.registerTask("default", "jison:commonjs");
+  grunt.registerTask("all", "Build all distributions", ["jison:amdjs", "jison:commonjs", "jison:browser", "browserify:dist"]);
+  grunt.registerTask("default", ["jison:commonjs", "jison:browser", "browserify:dist"]);
 };
