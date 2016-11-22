@@ -20,26 +20,18 @@ module.exports = function(grunt){
           "build/calculate-n.common.js": "src/grammar.jison"
         }
       },
-      "browser": {
-        "options": {
-          "moduleType": "js",
-          "moduleName": "calculateN"
-        },
-        "files": {
-          "build/calculate-n.inc.js": "src/grammar.jison"
-        }
-      }
     },
     "browserify": {
       "dist": {
         "options": {
-          "alias": ["./build/calculate-n.common.js:calculate-n"]
+          "alias": ["./build/calculate-n.common.js:calculate-n"],
+          "exclude": ["readline-sync"]
         },
         "src": "build/calculate-n.common.js",
         "dest": "build/calculate-n.js"
       }
     }
   });
-  grunt.registerTask("all", "Build all distributions", ["jison:amdjs", "jison:commonjs", "jison:browser", "browserify:dist"]);
-  grunt.registerTask("default", ["jison:commonjs", "jison:browser", "browserify:dist"]);
+  grunt.registerTask("all", "Build all distributions", ["jison:amdjs", "jison:commonjs", "browserify:dist"]);
+  grunt.registerTask("default", ["jison:commonjs", "browserify:dist"]);
 };

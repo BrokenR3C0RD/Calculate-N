@@ -13,8 +13,8 @@ var factorial = function(num){
   return val;
 }
 var g = (typeof global === "object" ? global : window);
-var variables = g.calcN = (g.calcN || {});
-var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
+var variables = {};
+var defFuncs = {
   "%NOOP": function(val){
     return Decimal(0);
   },
@@ -28,28 +28,32 @@ var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
     return Decimal.precision;
   },
   "sin": function(val){
-    return Math.sin(val.mul(Math.PI / 180));
+    return Decimal.sin(val.mul(Decimal.atan(-1).div(180)));
   },
   "cos": function(val){
-    return Math.cos(val.mul(Math.PI / 180));
+    return Decimal.cos(val.mul(Decimal.atan(-1).div(180)));
   },
   "tan": function(val){
-    return Math.tan(val.mul(Math.PI / 180));
+    return Decimal.tan(val.mul(Decimal.atan(-1).div(180)));
   },
   "rad": function(val){
-    return val.mul(Math.PI / 180);
+    return val.mul(Decimal.atan(-1).div(180));
   },
   "deg": function(val){
-    return val.div(Math.PI / 180);
+    return val.div(Decimal.atan(-1).div(180));
   },
-  "atan": function(val){
-    return val.atan().div(Math.PI / 180);
+  "atan": function(v1, v2){
+    if(v2 == null){
+      return v1.atan().div(Decimal.atan(-1).div(180));
+    } else {
+      return Decimal.atan2(v1, v2).div(Decimal.atan(-1).div(180));
+    }
   },
   "asin": function(val){
-    return val.asin().div(Math.PI / 180);
+    return val.asin().div(Decimal.atan(-1).div(180));
   },
   "acos": function(val){
-    return val.acos().div(Math.PI / 180)
+    return val.acos().div(Decimal.atan(-1).div(180));
   },
   "floor": function(val){
     return val.floor();
@@ -73,8 +77,8 @@ var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
   "ln": function(val){
     return val.ln();
   },
-  "log": function(val){
-    return val.log();
+  "log": function(v1, v2){
+    return v1.log(v2 || Decimal(10));
   },
   "PI": function(val){
     return Decimal.acos(-1);
@@ -90,9 +94,34 @@ var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
   },
   "sgn": function(val){
     return Decimal.sign(val);
+  },
+  "reset": function(val){
+    if(val === 0){
+      variables = {};
+      functions = g.cnFuncs = defFuncs;
+      return Decimal(1);
+    }
+  },
+  "input": function(val){
+    return (function lop(){
+      var txt = g.cnInp();
+      try {
+        return num = Decimal(txt);
+      } catch(e){
+        return lop();
+      }
+    })();
   }
 };
 
+var functions = g.cnFunc = g.cnFunc || defFuncs;
+if(!process.browser) var rl = require("readline-sync");
+
+g.cnInp = (process.browser ? function(){
+  return prompt("Please input a number")
+} : function(){
+  return rl.question("Input: ");
+});
 %}
 
 /* Lexical grammar */
@@ -118,28 +147,32 @@ var functions = variables["%FUNCS"] = variables["%FUNCS"] || {
 "^"                                return "^";
 "!"                                return "!";
 
-">"                                return ">";
-"<"                                return "<";
-"="                                return "=";
 ">="                               return ">=";
 "<="                               return "<=";
 "=="                               return "==";
 "!="                               return "!=";
+">"                                return ">";
+"<"                                return "<";
+"="                                return "=";
 
 "("                                return "(";
 ")"                                return ")";
+
+","                                return ",";
 
 <<EOF>>                            return "EOF";
 /lex
 
 /* Operator precedence */
-%left VARIABLE, '='
+
 %left '>', '<', '>=', '<=', '==', '!='
 %left '+', '-'
 %left '*', '/', '%'
 %left '^'
 %left '!'
 %left UMINUS
+%left VARIABLE
+
 
 %start expressions
 
@@ -168,7 +201,7 @@ e
   | e '/' e
     {$$ = $1.div($3);}
   | e '%' e
-    {$$ = $1.mod($3)}
+    {$$ = $1.mod($3);}
   | e '^' e
     {$$ = $1.pow($3);}
   | '-' e %prec UMINUS
@@ -195,8 +228,10 @@ e
     {$$ = variables[$1] || Decimal(0);}
   | VARIABLE '=' e
     {$$ = (variables[$1] = $3);}
-  | VARIABLE '(' e ')'
-    {$$ = (functions[$1] || functions["%NOOP"])($3) || Decimal(0);}
   | VARIABLE '(' ')'
     {$$ = (functions[$1] || functions["%NOOP"])(Decimal(0)) || Decimal(0);}
+  | VARIABLE '(' e ')'
+    {$$ = (functions[$1] || functions["%NOOP"])($3) || Decimal(0);}
+  | VARIABLE '(' e ',' e ')'
+    {$$ = (functions[$1] || functions["%NOOP"])($3, $5) || Decimal(0);}
   ;
