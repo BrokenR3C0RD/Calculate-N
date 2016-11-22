@@ -405,11 +405,9 @@ var defFuncs = {
     return Decimal.sign(val);
   },
   "reset": function(val){
-    if(val === 0){
-      variables = {};
-      functions = g.cnFuncs = defFuncs;
-      return Decimal(1);
-    }
+    variables = {};
+    functions = g.cnFuncs = defFuncs;
+    return Decimal(1);
   },
   "input": function(val){
     return (function lop(){
