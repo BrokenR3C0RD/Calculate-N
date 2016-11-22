@@ -1,6 +1,7 @@
 /* A simple calculator with functions */
 
 /* Factorial function, variables, and the built-in functions are here. */
+
 %{
 var Decimal = require("decimal.js");
 Decimal.set({"modulo": Decimal.EUCLID});
@@ -19,7 +20,8 @@ var defFuncs = {
     return Decimal(0);
   },
   "print": function(val){
-    (typeof global === "object" ? console.log : window.calcPrint)((val >= 0 ? " " : "") + val);
+    (g.cnPrint || function(v){console.log((v.lt(0) ? "" : " ") + v);})(val);
+    return Decimal(0);
   },
   "prec": function(val){
     if(!val.eq(0)){
@@ -165,14 +167,14 @@ g.cnInp = (process.browser ? function(){
 
 /* Operator precedence */
 
+%left '(', ')'
+%left '='
 %left '>', '<', '>=', '<=', '==', '!='
 %left '+', '-'
 %left '*', '/', '%'
 %left '^'
 %left '!'
 %left UMINUS
-%left VARIABLE
-
 
 %start expressions
 

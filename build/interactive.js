@@ -15,7 +15,7 @@ rl.on("line", function(line){
 
   try{
   var res = calcN.parse(line);
-    if(res != true){
+    if(res !== true){
       console.log((res < 0 ? "" : " ") + res);
     }
   } catch(e){
