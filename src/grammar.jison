@@ -222,6 +222,8 @@ e
     {$$ = !($1.eq($3)) ? Decimal(1) : Decimal(0);}
   | '(' e ')'
     {$$ = $2;}
+  | e '(' e ')' %prec '*'
+    {$$ = $1.mul($3);}
   | NUMBER
     {$$ = Decimal(yytext);}
   | VARIABLE
